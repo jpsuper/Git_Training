@@ -18,11 +18,13 @@ def split_file(file_path, line_limit):
 def search_string_in_file(file_path, string_to_search):
     result = subprocess.check_output(['grep', '-n', string_to_search, file_path])
     if result:
-        print(result.decode('utf-8'))
+        with open('results.txt', 'a') as f:
+            f.write(result.decode('utf-8'))
 
 def search_string_in_zip(zip_path, string_to_search):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        info = zip_ref.getinfo(os.path.splitext(zip_path)[0] + '.log')
+        log_file_name = os.path.splitext(zip_path)[0] + '/' + os.path.splitext(zip_path)[0] + '.log'
+        info = zip_ref.getinfo(log_file_name)
         if info.file_size >= GB:
             zip_ref.extract(info.filename)
             file_name = info.filename
@@ -40,7 +42,9 @@ def search_string_in_zip(zip_path, string_to_search):
         else:
             result = subprocess.check_output(['zgrep', '-n', string_to_search, zip_path])
             if result:
-                print(result.decode('utf-8'))
+                with open('results.txt', 'a') as f:
+                    f.write(result.decode('utf-8'))
 
 search_string_in_zip('example.zip', 'search string')
+
 
