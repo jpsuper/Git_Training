@@ -3,3 +3,44 @@ Hello this is SSH Base Connection
 This is test fiel for sample download.
 
 And this is another commit from local machine.
+
+import os
+import zipfile
+import math
+import subprocess
+
+GB = 2 * (1024 ** 3)  # 2GB
+
+def split_file(file_path, line_limit):
+    subprocess.call(['split', '-l', str(line_limit), file_path, file_path + '_'])
+    os.remove(file_path)
+
+def search_string_in_file(file_path, string_to_search):
+    result = subprocess.check_output(['grep', '-n', string_to_search, file_path])
+    if result:
+        print(result.decode('utf-8'))
+
+def search_string_in_zip(zip_path, string_to_search):
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        info = zip_ref.getinfo(os.path.splitext(zip_path)[0] + '.log')
+        if info.file_size >= GB:
+            zip_ref.extract(info.filename)
+            file_name = info.filename
+            with open(file_name, 'r') as f:
+                lines = f.readlines()
+            line_limit = int(math.ceil(len(lines) / (info.file_size / GB)))
+            split_file(file_name, line_limit)
+
+            for split_file_name in os.listdir('.'):
+                if split_file_name.startswith(file_name + '_'):
+                    search_string_in_file(split_file_name, string_to_search)
+                    os.remove(split_file_name)
+
+            os.remove(file_name)
+        else:
+            result = subprocess.check_output(['zgrep', '-n', string_to_search, zip_path])
+            if result:
+                print(result.decode('utf-8'))
+
+search_string_in_zip('example.zip', 'search string')
+
