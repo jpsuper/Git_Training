@@ -1,1 +1,3 @@
 This is Sample File 1
+
+An understanding of DevOps and the modern DevOps Tools Docker, Kubernetes, Jenkins, Docker Swarm, Kubernetes Helm.
