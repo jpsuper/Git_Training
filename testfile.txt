@@ -3,3 +3,52 @@ Hello this is SSH Base Connection
 This is test fiel for sample download.
 
 And this is another commit from local machine.
+
+import os
+import zipfile
+import math
+import subprocess
+
+GB = 2 * (1024 ** 3)  # 2GB
+
+def split_file(file_path, line_limit):
+    subprocess.call(['split', '-l', str(line_limit), file_path, file_path + '_'])
+    os.remove(file_path)
+
+def search_string_in_file(file_path, string_to_search, output_file):
+    result = subprocess.check_output(['grep', '-n', string_to_search, file_path])
+    if result:
+        with open(output_file, 'w') as out_f:
+            out_f.write(result.decode('utf-8'))
+
+def search_string_in_zip(zip_path, string_to_search):
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        inner_folder = os.path.splitext(zip_path)[0]
+        log_file_path = os.path.join(inner_folder, inner_folder + '.log')
+        info = zip_ref.getinfo(log_file_path)
+        if info.file_size >= GB:
+            zip_ref.extract(info.filename)
+            file_name = info.filename
+            with open(file_name, 'r') as f:
+                lines = f.readlines()
+            line_limit = int(math.ceil(len(lines) / (info.file_size / GB)))
+            split_file(file_name, line_limit)
+
+            for i, split_file_name in enumerate(os.listdir(inner_folder)):
+                if split_file_name.startswith(inner_folder + '.log_'):
+                    output_file = f'search_results_{i}.txt'
+                    search_string_in_file(os.path.join(inner_folder, split_file_name), string_to_search, output_file)
+                    os.remove(os.path.join(inner_folder, split_file_name))
+
+            os.remove(file_name)
+        else:
+            result = subprocess.check_output(['zgrep', '-n', string_to_search, zip_path])
+            if result:
+                with open('search_results.txt', 'w') as out_f:
+                    out_f.write(result.decode('utf-8'))
+
+    if os.path.exists(inner_folder):
+        os.rmdir(inner_folder)
+
+search_string_in_zip('example.zip', 'search string')
+
